@@ -4,7 +4,7 @@ import path from 'path';
 import { defineConfig } from 'vite';
 
 export default defineConfig(({ mode }) => ({
-  base: mode === 'production' ? './' : '/',
+  base: mode === 'production' ? '/Fetch2.0/' : '/',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
