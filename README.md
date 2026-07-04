@@ -10,7 +10,6 @@ Fetch is a browser-based platformer game built with React, TypeScript, Vite, and
 - Hazard-filled level design with enemies and obstacles
 - HUD, mission prompts, and end-of-game screens
 - Built-in audio and particle effects
-
 ## Tech Stack
 
 - React
