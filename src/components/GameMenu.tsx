@@ -7,6 +7,7 @@ import React from 'react';
 import { Play, RotateCcw, Award, AlertTriangle, ExternalLink, Globe, Compass, RefreshCw } from 'lucide-react';
 import { motion } from 'motion/react';
 import { gameAudio } from '../audio';
+import { DifficultyMode } from '../types';
 
 interface GameMenuProps {
   screen: 'menu' | 'intro' | 'gameover' | 'victory';
@@ -14,6 +15,8 @@ interface GameMenuProps {
   timeRemaining: number;
   familiesHelped: number;
   totalFamilies: number;
+  selectedDifficulty: DifficultyMode;
+  onDifficultyChange: (difficulty: DifficultyMode) => void;
   onStartGame: () => void;
   onRestartGame: () => void;
   onGoToMenu: () => void;
@@ -25,6 +28,8 @@ export default function GameMenu({
   timeRemaining,
   familiesHelped,
   totalFamilies,
+  selectedDifficulty,
+  onDifficultyChange,
   onStartGame,
   onRestartGame,
   onGoToMenu,
@@ -81,6 +86,28 @@ export default function GameMenu({
             Take on the role of a young water explorer. Cross obstacles, dodge pollution creatures, collect clean water from the reservoir, and bring hope to families in need!
           </p>
 
+          <div className="w-full max-w-xs mb-5">
+            <p className="font-press-start text-[10px] text-purple-200 uppercase mb-2">Select Difficulty</p>
+            <div className="grid grid-cols-3 gap-2">
+              {(['easy', 'normal', 'hard'] as DifficultyMode[]).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => {
+                    gameAudio.playClick();
+                    onDifficultyChange(mode);
+                  }}
+                  className={`rounded-lg py-2 px-1 text-[10px] font-press-start uppercase border-2 transition-all cursor-pointer ${
+                    selectedDifficulty === mode
+                      ? 'bg-sky-400 text-slate-900 border-sky-200'
+                      : 'bg-slate-900/70 text-purple-100 border-purple-700 hover:bg-slate-800'
+                  }`}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="flex flex-col gap-3 w-full max-w-xs">
             <button
               onClick={handleStart}
@@ -131,14 +158,14 @@ export default function GameMenu({
             </p>
             <p className="font-semibold text-yellow-400 font-press-start text-xxs uppercase">YOUR GOAL:</p>
             <p>
-              As the village explorer, you must run across the floating hills and muddy valleys to deliver clean, life-saving water to <strong>four waiting families</strong>.
+              As the village explorer, you must run across the floating hills and muddy valleys to deliver clean, life-saving water to complete <strong>{totalFamilies} deliveries</strong>.
             </p>
             <p className="font-semibold text-emerald-400 font-press-start text-xxs uppercase">HOW TO PLAY:</p>
             <ul className="list-disc pl-5 flex flex-col gap-1.5 text-slate-300">
               <li>Walk far left to the <strong>Clean Water Tank</strong> and press <kbd className="px-1 bg-slate-800 text-white font-bold rounded">E</kbd> or tap <kbd className="px-1 bg-slate-800 text-white font-bold rounded">E icon</kbd> to refill. And Pro tip, you can double-tap the space bar to double jump!</li>
               <li>Carry the bucket carefully. Watch it bounce on your head!</li>
               <li>Dodge mud puddles, poisonous creatures, spikes, and falling boulders.</li>
-              <li>Deliver water to each of the <strong>4 families</strong> by walking to them and pressing <kbd className="px-1 bg-slate-800 text-white font-bold rounded">E</kbd>!</li>
+              <li>Deliver water until you reach <strong>{totalFamilies} total deliveries</strong> by walking to a family and pressing <kbd className="px-1 bg-slate-800 text-white font-bold rounded">E</kbd>!</li>
             </ul>
           </div>
 
@@ -219,7 +246,7 @@ export default function GameMenu({
           </h3>
 
           <p className="text-xs md:text-sm text-emerald-100 max-w-sm mb-6 leading-relaxed font-sans">
-            "You changed lives by delivering clean water." All 4 families now have safe, sustainable clean water from the tank, preventing illnesses and allowing kids to go to school!
+            "You changed lives by delivering clean water." You completed {totalFamilies} deliveries and helped keep clean water flowing for families in need.
           </p>
 
           {/* Stats Breakdown Box */}

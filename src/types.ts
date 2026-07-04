@@ -5,6 +5,8 @@
 
 export type GameScreen = 'menu' | 'intro' | 'playing' | 'gameover' | 'victory';
 
+export type DifficultyMode = 'easy' | 'normal' | 'hard';
+
 export interface PlayerState {
   x: number;
   y: number;

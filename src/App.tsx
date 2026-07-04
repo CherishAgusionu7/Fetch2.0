@@ -9,19 +9,23 @@ import GameHUD from './components/GameHUD';
 import GameMenu from './components/GameMenu';
 import Controls from './components/Controls';
 import EducationalBanner from './components/EducationalBanner';
-import { GameScreen } from './types';
+import { GameScreen, DifficultyMode } from './types';
+import { DIFFICULTY_SETTINGS } from './constants';
 import { gameAudio } from './audio';
 import { Droplet } from 'lucide-react';
 
 export default function App() {
   const [screen, setScreen] = useState<GameScreen>('menu');
+  const [difficulty, setDifficulty] = useState<DifficultyMode>('normal');
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(false);
+
+  const activeDifficulty = DIFFICULTY_SETTINGS[difficulty];
 
   // HUD stats synced from Game Loop inside Canvas
   const [hudStats, setHudStats] = useState({
     lives: 3,
-    timeRemaining: 120,
+    timeRemaining: activeDifficulty.timeLimit,
     familiesHelped: 0,
     hasWater: false,
     waterCarried: 0,
@@ -134,6 +138,7 @@ export default function App() {
             setHudStats={setHudStats}
             mobileKeyStates={mobileKeyStates}
             resetSignal={resetSignal}
+            difficulty={difficulty}
           />
 
           {/* 2. Overlaid Active Console HUD */}
@@ -143,7 +148,7 @@ export default function App() {
               maxLives={3}
               timeRemaining={hudStats.timeRemaining}
               familiesHelped={hudStats.familiesHelped}
-              totalFamilies={4}
+              totalFamilies={activeDifficulty.requiredDeliveries}
               hasWater={hudStats.hasWater}
               waterCarried={hudStats.waterCarried}
               isMuted={isMuted}
@@ -160,7 +165,9 @@ export default function App() {
               lives={hudStats.lives}
               timeRemaining={hudStats.timeRemaining}
               familiesHelped={hudStats.familiesHelped}
-              totalFamilies={4}
+              totalFamilies={activeDifficulty.requiredDeliveries}
+              selectedDifficulty={difficulty}
+              onDifficultyChange={setDifficulty}
               onStartGame={screen === 'menu' ? () => setScreen('intro') : startGame}
               onRestartGame={restartGame}
               onGoToMenu={goToMenu}

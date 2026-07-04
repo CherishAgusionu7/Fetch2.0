@@ -3,7 +3,35 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { PlatformState, EnemyState, ObstacleState, FamilyState } from './types';
+import { PlatformState, EnemyState, ObstacleState, FamilyState, DifficultyMode } from './types';
+
+export interface DifficultySettings {
+  requiredDeliveries: number;
+  timeLimit: number;
+  enemySpeedMultiplier: number;
+  obstacleDamage: number;
+}
+
+export const DIFFICULTY_SETTINGS: Record<DifficultyMode, DifficultySettings> = {
+  easy: {
+    requiredDeliveries: 3,
+    timeLimit: 150,
+    enemySpeedMultiplier: 0.8,
+    obstacleDamage: 1,
+  },
+  normal: {
+    requiredDeliveries: 4,
+    timeLimit: 120,
+    enemySpeedMultiplier: 1,
+    obstacleDamage: 1,
+  },
+  hard: {
+    requiredDeliveries: 5,
+    timeLimit: 90,
+    enemySpeedMultiplier: 1.25,
+    obstacleDamage: 2,
+  },
+};
 
 export const LEVEL_WIDTH = 3800;
 export const LEVEL_HEIGHT = 700;

@@ -14,7 +14,8 @@ import {
   ParticleState, 
   ProjectileState, 
   WaterTankState,
-  GameScreen
+  GameScreen,
+  DifficultyMode
 } from '../types';
 import { 
   PHYSICS, 
@@ -24,7 +25,8 @@ import {
   INITIAL_FAMILIES, 
   LEVEL_WIDTH, 
   LEVEL_HEIGHT, 
-  CAMERA_PADDING_X 
+  CAMERA_PADDING_X,
+  DIFFICULTY_SETTINGS
 } from '../constants';
 import { gameAudio } from '../audio';
 
@@ -46,6 +48,7 @@ interface GameCanvasProps {
     action: boolean;
   };
   resetSignal: number;
+  difficulty: DifficultyMode;
 }
 
 export default function GameCanvas({
@@ -54,6 +57,7 @@ export default function GameCanvas({
   setHudStats,
   mobileKeyStates,
   resetSignal,
+  difficulty,
 }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const pendingTimeouts = useRef<number[]>([]);
@@ -69,6 +73,7 @@ export default function GameCanvas({
 
   const checkpointRef = useRef<{
     familyId: number | null;
+    difficulty: DifficultyMode;
     player: PlayerState;
     enemies: EnemyState[];
     projectiles: ProjectileState[];
@@ -130,13 +135,15 @@ export default function GameCanvas({
     particles: [],
     stats: {
       score: 0,
-      timeRemaining: 120, // 2 minutes
+      timeRemaining: DIFFICULTY_SETTINGS.normal.timeLimit,
       familiesHelped: 0,
-      totalFamilies: 4,
+      totalFamilies: DIFFICULTY_SETTINGS.normal.requiredDeliveries,
       waterDelivered: 0,
       isSoundMuted: false,
     },
   });
+
+  const activeDifficulty = DIFFICULTY_SETTINGS[difficulty];
 
   // Track active inputs
   const keysPressed = useRef<{ [key: string]: boolean }>({});
@@ -150,6 +157,7 @@ export default function GameCanvas({
     const s = stateRef.current;
     checkpointRef.current = {
       familyId,
+      difficulty,
       player: cloneValue(s.player),
       enemies: cloneValue(s.enemies),
       projectiles: cloneValue(s.projectiles),
@@ -163,11 +171,10 @@ export default function GameCanvas({
     checkpointFlashTimer.current = familyId === null ? 0 : 90;
   };
 
-  const restoreCheckpoint = () => {
+  const loadCheckpoint = () => {
     const checkpoint = checkpointRef.current;
-    if (!checkpoint) {
-      initLevel();
-      return;
+    if (!checkpoint || checkpoint.difficulty !== difficulty) {
+      return false;
     }
 
     const s = stateRef.current;
@@ -203,6 +210,14 @@ export default function GameCanvas({
     keysPressed.current['arrowup'] = false;
     keysPressed.current[' '] = false;
     keysPressed.current['e'] = false;
+
+    return true;
+  };
+
+  const respawnAtCheckpoint = () => {
+    if (!loadCheckpoint()) {
+      initLevel();
+    }
   };
 
   // Logical game resolution (16:9)
@@ -280,9 +295,9 @@ export default function GameCanvas({
     s.projectiles = [];
     s.stats = {
       score: 0,
-      timeRemaining: 120, // 2 minutes
+      timeRemaining: activeDifficulty.timeLimit,
       familiesHelped: 0,
-      totalFamilies: 4,
+      totalFamilies: activeDifficulty.requiredDeliveries,
       waterDelivered: 0,
       isSoundMuted: s.stats?.isSoundMuted ?? false,
     };
@@ -363,7 +378,7 @@ export default function GameCanvas({
         return;
       }
       if (s.player.lives <= 0) {
-        restoreCheckpoint();
+        respawnAtCheckpoint();
         return;
       }
 
@@ -647,7 +662,7 @@ export default function GameCanvas({
         // Enemy specific AI patterns
         if (enemy.type === 'sludge') {
           // Patrol side-to-side
-          enemy.x += enemy.vx;
+          enemy.x += enemy.vx * activeDifficulty.enemySpeedMultiplier;
           if (enemy.x <= enemy.patrolMinX) {
             enemy.x = enemy.patrolMinX;
             enemy.vx = Math.abs(enemy.vx);
@@ -665,7 +680,7 @@ export default function GameCanvas({
           if (enemy.actionTimer <= 0) {
             // Jump!
             enemy.vy = -7.5;
-            enemy.vx = (Math.random() > 0.5 ? 1 : -1) * 2;
+            enemy.vx = (Math.random() > 0.5 ? 1 : -1) * 2 * activeDifficulty.enemySpeedMultiplier;
             enemy.actionTimer = 90 + Math.random() * 60; // reset jump cooloff
             gameAudio.playLand(); // slime bounce sound
           }
@@ -699,7 +714,7 @@ export default function GameCanvas({
           enemy.y = enemy.spawnY + Math.sin(enemy.actionTimer * 0.05) * 35;
 
           // Slow drift patrol
-          enemy.x += enemy.vx;
+          enemy.x += enemy.vx * activeDifficulty.enemySpeedMultiplier;
           if (enemy.x <= enemy.patrolMinX) {
             enemy.vx = Math.abs(enemy.vx);
             enemy.direction = 'right';
@@ -718,8 +733,9 @@ export default function GameCanvas({
             const dy = s.player.y - enemy.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
             if (dist < 400) {
-              const vx = (dx / dist) * 4;
-              const vy = (dy / dist) * 4;
+              const projectileSpeed = 4 * activeDifficulty.enemySpeedMultiplier;
+              const vx = (dx / dist) * projectileSpeed;
+              const vy = (dy / dist) * projectileSpeed;
               s.projectiles.push({
                 id: `proj_${Date.now()}_${Math.random()}`,
                 x: enemy.x + enemy.width / 2,
@@ -737,7 +753,7 @@ export default function GameCanvas({
 
         if (enemy.type === 'bat') {
           // Quick swooping bat
-          enemy.x += enemy.vx;
+          enemy.x += enemy.vx * activeDifficulty.enemySpeedMultiplier;
           if (enemy.x <= enemy.patrolMinX) {
             enemy.vx = Math.abs(enemy.vx);
             enemy.direction = 'right';
@@ -780,7 +796,7 @@ export default function GameCanvas({
           
           // Collision check
           if (checkCollision(s.player, obs) && !s.player.isHurt && s.player.invulnerableTimer <= 0) {
-            damagePlayer();
+            damagePlayer(false, activeDifficulty.obstacleDamage);
           }
         }
 
@@ -815,7 +831,7 @@ export default function GameCanvas({
 
             // Hit player check
             if (checkCollision(s.player, obs) && !s.player.isHurt && s.player.invulnerableTimer <= 0) {
-              damagePlayer();
+              damagePlayer(false, activeDifficulty.obstacleDamage);
               obs.y = obs.startY ?? 100;
               obs.speedY = 0;
               obs.spawnTimer = 0;
@@ -825,7 +841,7 @@ export default function GameCanvas({
 
         if (obs.type === 'spikes') {
           if (checkCollision(s.player, obs) && !s.player.isHurt && s.player.invulnerableTimer <= 0) {
-            damagePlayer();
+            damagePlayer(false, activeDifficulty.obstacleDamage);
             // Knock upwards
             s.player.vy = -8;
           }
@@ -867,14 +883,19 @@ export default function GameCanvas({
         }
 
         // 2. DELIVER TO FAMILIES PROXIMITY
+        const canRepeatDeliveries = s.stats.totalFamilies > s.families.length && s.families.every((fam) => fam.hasWater);
+
         s.families.forEach((fam) => {
-          if (fam.hasWater) return; // already helped
+          const canDeliverHere = !fam.hasWater || canRepeatDeliveries;
+          if (!canDeliverHere) return;
 
           const nearFamily = checkProximity(p, fam.x + fam.width / 2, fam.y, 95);
           if (nearFamily) {
             if (p.hasWater) {
               // SUCCESS WATER DELIVERY
-              fam.hasWater = true;
+              if (!fam.hasWater) {
+                fam.hasWater = true;
+              }
               p.hasWater = false;
               p.waterCarried = 0;
               s.stats.familiesHelped++;
@@ -889,14 +910,12 @@ export default function GameCanvas({
               createSparkleExplosion(fam.x + fam.width / 2, fam.y + fam.height / 2, 20);
               spawnFloatingText(fam.x + 20, fam.y - 20, "DELIVERED! 🎉", "#4ade80");
 
-              if (s.stats.familiesHelped < s.stats.totalFamilies) {
-                saveCheckpoint(fam.id);
-                gameAudio.playCheckpoint();
-                spawnFloatingText(fam.x + fam.width / 2, fam.y - 150, "CHECKPOINT REACHED!", "#22d3ee");
-              }
+              saveCheckpoint(fam.id);
+              gameAudio.playCheckpoint();
+              spawnFloatingText(fam.x + fam.width / 2, fam.y - 150, "Checkpoint Reached!", "#22d3ee");
 
               // Victory check
-              if (s.stats.familiesHelped === s.stats.totalFamilies) {
+              if (s.stats.familiesHelped >= s.stats.totalFamilies) {
                 registerTimeout(window.setTimeout(() => {
                   setScreen('victory');
                   gameAudio.playVictory();
@@ -916,12 +935,12 @@ export default function GameCanvas({
     };
 
     // DMG PLAYER HANDLER
-    const damagePlayer = (forceRespawn = false) => {
+    const damagePlayer = (forceRespawn = false, damage = 1) => {
       const s = stateRef.current;
       const p = s.player;
       if (p.invulnerableTimer > 0 && !forceRespawn) return;
 
-      p.lives--;
+      p.lives = Math.max(0, p.lives - damage);
       p.hurtTimer = 25; // 25 frames of red flash
       p.invulnerableTimer = 75; // frames of blinking/invulnerable
       p.vx = p.direction === 'left' ? PHYSICS.KNOCKBACK_X : -PHYSICS.KNOCKBACK_X;
@@ -932,12 +951,12 @@ export default function GameCanvas({
       gameAudio.playHurt();
 
       if (forceRespawn) {
-        restoreCheckpoint();
+        respawnAtCheckpoint();
         return;
       }
 
       if (p.lives <= 0) {
-        restoreCheckpoint();
+        respawnAtCheckpoint();
         return;
       }
 
