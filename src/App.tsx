@@ -75,6 +75,12 @@ export default function App() {
     setScreen('playing');
   };
 
+  const showIntroForDifficulty = (selectedDifficulty: DifficultyMode) => {
+    handleUserInteraction();
+    setDifficulty(selectedDifficulty);
+    setScreen('intro');
+  };
+
   const resetGame = () => {
     handleUserInteraction();
     setResetSignal((prev) => prev + 1);
@@ -170,7 +176,7 @@ export default function App() {
               familiesHelped={hudStats.familiesHelped}
               totalFamilies={activeDifficulty.requiredDeliveries}
               selectedDifficulty={difficulty}
-              onDifficultyChange={(mode) => startGame(mode)}
+              onDifficultyChange={showIntroForDifficulty}
               onStartGame={startGame}
               onRestartGame={restartGame}
               onGoToMenu={goToMenu}
