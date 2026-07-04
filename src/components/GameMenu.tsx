@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Play, RotateCcw, Award, AlertTriangle, ExternalLink, Globe, Compass, RefreshCw } from 'lucide-react';
+import { RotateCcw, Award, AlertTriangle, ExternalLink, Globe, Compass, RefreshCw } from 'lucide-react';
 import { motion } from 'motion/react';
 import { gameAudio } from '../audio';
 import { DifficultyMode } from '../types';
@@ -34,11 +34,6 @@ export default function GameMenu({
   onRestartGame,
   onGoToMenu,
 }: GameMenuProps) {
-
-  const handleStart = () => {
-    gameAudio.playClick();
-    onStartGame();
-  };
 
   const handleRestart = () => {
     gameAudio.playClick();
@@ -79,7 +74,7 @@ export default function GameMenu({
           </h1>
           
           <h2 className="font-press-start text-xs md:text-sm text-sky-300 uppercase tracking-wider mb-6">
-            The Clean Water Quest
+            Choose Difficulty
           </h2>
 
           <p className="text-xs md:text-sm text-purple-200 leading-relaxed font-sans max-w-sm mb-8">
@@ -108,23 +103,13 @@ export default function GameMenu({
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 w-full max-w-xs">
-            <button
-              onClick={handleStart}
-              className="bg-yellow-500 hover:bg-yellow-400 text-slate-900 border-b-6 border-yellow-700 hover:border-yellow-500 active:border-b-0 active:translate-y-[6px] rounded-xl py-3 px-6 text-sm font-press-start flex items-center justify-center gap-2 shadow-lg cursor-pointer transition-all uppercase"
-            >
-              <Play className="w-5 h-5 fill-current" />
-              PLAY MISSION
-            </button>
-
-            <button
-              onClick={handleLearnMore}
-              className="bg-sky-500 hover:bg-sky-400 text-white border-b-6 border-sky-700 hover:border-sky-500 active:border-b-0 active:translate-y-[6px] rounded-xl py-3 px-6 text-xs font-press-start flex items-center justify-center gap-2 shadow-lg cursor-pointer transition-all uppercase"
-            >
-              <Globe className="w-4 h-4" />
-              charity: water
-            </button>
-          </div>
+          <button
+            onClick={handleLearnMore}
+            className="mt-3 bg-sky-500 hover:bg-sky-400 text-white border-b-6 border-sky-700 hover:border-sky-500 active:border-b-0 active:translate-y-[6px] rounded-xl py-3 px-6 text-xs font-press-start flex items-center justify-center gap-2 shadow-lg cursor-pointer transition-all uppercase"
+          >
+            <Globe className="w-4 h-4" />
+            charity: water
+          </button>
 
           <div className="mt-8 text-[10px] font-press-start text-purple-300">
             Inspired by charity: water • Help solve the crisis
@@ -170,7 +155,7 @@ export default function GameMenu({
           </div>
 
           <button
-            onClick={handleStart}
+            onClick={onStartGame}
             className="bg-green-500 hover:bg-green-400 text-slate-900 border-b-6 border-green-700 hover:border-green-500 active:border-b-0 active:translate-y-[6px] rounded-xl py-3 px-8 text-sm font-press-start shadow-md cursor-pointer transition-all self-center uppercase"
           >
             START QUEST

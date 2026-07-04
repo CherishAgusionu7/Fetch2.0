@@ -67,8 +67,11 @@ export default function App() {
     gameAudio.setMute(targetMute);
   };
 
-  const startGame = () => {
+  const startGame = (selectedDifficulty?: DifficultyMode) => {
     handleUserInteraction();
+    if (selectedDifficulty) {
+      setDifficulty(selectedDifficulty);
+    }
     setScreen('playing');
   };
 
@@ -167,8 +170,8 @@ export default function App() {
               familiesHelped={hudStats.familiesHelped}
               totalFamilies={activeDifficulty.requiredDeliveries}
               selectedDifficulty={difficulty}
-              onDifficultyChange={setDifficulty}
-              onStartGame={screen === 'menu' ? () => setScreen('intro') : startGame}
+              onDifficultyChange={(mode) => startGame(mode)}
+              onStartGame={startGame}
               onRestartGame={restartGame}
               onGoToMenu={goToMenu}
             />
