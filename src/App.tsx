@@ -177,7 +177,7 @@ export default function App() {
               totalFamilies={activeDifficulty.requiredDeliveries}
               selectedDifficulty={difficulty}
               onDifficultyChange={showIntroForDifficulty}
-              onStartGame={startGame}
+              onStartGame={() => startGame()}
               onRestartGame={restartGame}
               onGoToMenu={goToMenu}
             />
